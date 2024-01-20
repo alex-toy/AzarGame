@@ -1,15 +1,37 @@
 var isInitPhase = true;
+var beginnerIndex = 1;
 
 const new_game = document.getElementById("new_game");
 const wilfied = document.getElementById("wilfied");
 const herevald = document.getElementById("herevald");
+const playerButtons = [wilfied, herevald];
 
 const wilfiedSC = document.getElementById("wilfiedSC");
 const herevaldSC = document.getElementById("herevaldSC");
 
-var player1 =  {"name" : "wilfied", scoreChance : 0, playerSC : wilfiedSC};
-var player2 =  {"name" : "herevald", scoreChance : 0, playerSC : herevaldSC};
+function Player(name, score, sc) {
+  this.name = name;
+  this.scoreChance = score;
+  this.playerSC = sc;
+}
+
+Player.prototype.displayPlayerResult = function() {
+  let message = `${this.name} joue, ${launchDiceResult.message}`;
+  let is_azar = isAzar(launchDiceResult);
+  message += is_azar ? " : Azar!" : " : Chance!";
+  addMessageToElem(results, message);
+};
+
+var player1 = new Player("wilfied", 0, wilfiedSC);
+var player2 = new Player("herevald", 0, herevaldSC);
 var players = [player1, player2];
+var beginnerPlayer = players[beginnerIndex];
+var otherPlayer = players[(beginnerIndex+1)%2];
+
+var launchDiceResult = {
+  message : "",
+  sum : 0
+}
 
 const d1 = document.getElementById("d1");
 const d2 = document.getElementById("d2");
@@ -20,74 +42,69 @@ const results = document.getElementById("results");
 new_game.addEventListener("click", ()  => {
   isInitPhase = true;
   results.innerHTML = "";
-  wilfied.disabled = false;
-  herevald.disabled = true;
   
-  player1.scoreChance = 0;
-  player2.scoreChance = 0;
+  playerButtons.forEach(function(player, index) {
+    player.disabled = index != beginnerIndex;
+  });
   
-  setDiceResults("", "", "");
+  beginnerPlayer.scoreChance = 0;
+  otherPlayer.scoreChance = 0;
+  
+  setDiceResults();
   wilfiedSC.innerHTML = "";
   herevaldSC.innerHTML = "";
 });
 
-wilfied.addEventListener("click", ()  => {
-  const launchDiceResult = launchDice();
-  displayPlayerResult(player1, launchDiceResult);
-
-  var isBeginner = true;
-
-  if (isBeginner){
-    isInitPhase ? handleInitPhase(launchDiceResult) : checkWinner(launchDiceResult.sum);
-  } else {
-    checkWinner(launchDiceResult.sum);
-  }
+playerButtons.forEach(function(player, index) {
+  player.addEventListener("click", ()  => { 
+    play(index);
+  });
 });
 
-herevald.addEventListener("click", ()  => {
-  const launchDiceResult = launchDice();
-  displayPlayerResult(player2, launchDiceResult);
+function play(index){
+  launchDice();
+  players[index].displayPlayerResult();
 
-  var isBeginner = false;
-
-  if (isBeginner){
-    isInitPhase ? handleInitPhase(launchDiceResult) : checkWinner(launchDiceResult.sum);
+  if (beginnerIndex == index){
+    isInitPhase ? handleInitPhase() : checkWinner();
   } else {
-    checkWinner(launchDiceResult.sum);
-  }
-});
-
-function handleInitPhase(launchDiceResult) {
-  if (isAzar(launchDiceResult)) {
-    if (player2.scoreChance) displayWinner(player2);
-    else displayWinner(player1);
-    
-  } else {
-    if (player2.scoreChance) {
-      if(player2.scoreChance !== launchDiceResult.sum) {
-        player1.scoreChance = launchDiceResult.sum;
-        displaySC(player1);
-        isInitPhase = false;
-        wilfied.disabled = true;
-        herevald.disabled = false;
-      }
-      else {
-        player2.scoreChance = 0;
-      }
-    }
-    else {
-      player2.scoreChance = launchDiceResult.sum;
-      displaySC(player2);
-    }
+    checkWinner();
   }
 }
 
-function checkWinner(score){
-  if(player2.scoreChance === score) {
-    displayWinner(player2);
+function handleInitPhase() {
+  if (isAzar()) {
+    displayWinner(otherPlayer.scoreChance ? otherPlayer : beginnerPlayer);
+  } else {
+    handleChance();
   }
-  else if(player1.scoreChance === score) {
-    displayWinner(player1);
+}
+
+function handleChance(){
+  if (otherPlayer.scoreChance) {
+    if(otherPlayer.scoreChance !== launchDiceResult.sum) {
+      beginnerPlayer.scoreChance = launchDiceResult.sum;
+      displaySC(beginnerPlayer);
+      isInitPhase = false;
+      playerButtons[beginnerIndex] = true;
+      playerButtons[(beginnerIndex+1)%2] = false;
+    }
+    else {
+      otherPlayer.scoreChance = 0;
+    }
+  }
+  else {
+    otherPlayer.scoreChance = launchDiceResult.sum;
+    displaySC(otherPlayer);
+  }
+}
+
+function checkWinner(){
+  if(otherPlayer.scoreChance === launchDiceResult.sum) {
+    displayWinner(otherPlayer);
+  }
+  else if(beginnerPlayer.scoreChance === launchDiceResult.sum) {
+    displayWinner(beginnerPlayer);
   }
   else { 
     wilfied.disabled = !wilfied.disabled;
@@ -110,16 +127,15 @@ function launchDice() {
   
   setDiceResults(result1, result2, result3);
 
-  return {
+  launchDiceResult = {
     message : `${result1} + ${result2} + ${result3}, total ${total}`,
     sum : total
   };
 }
 
-function setDiceResults(dice1, dice2, dice3) {
-  setDiceResultsDice(dice1, 1);
-  setDiceResultsDice(dice2, 2);
-  setDiceResultsDice(dice3, 3);
+function setDiceResults() {
+  if (arguments.length == 0) resetDiceResultsDice();
+  for (let i=0; i<arguments.length; i++) setDiceResultsDice(arguments[i], i + 1);
 }
 
 function setDiceResultsDice(dice, diceIndex) {
@@ -127,71 +143,28 @@ function setDiceResultsDice(dice, diceIndex) {
     var query = `#d${diceIndex} .dice${i}`;
     (document.querySelector(query)).style.display = i == dice ? 'block' : 'none';
   }
-
-  // if (dice1 == 1) {
-  //   for (var i=1; i<=6; i++) {
-  //    (document.querySelector(`#d1 .dice${i}`)).style.display = i == dice1 ? 'block' : 'none';
-  //   }
-  //   (document.querySelector('#d1 .dice1')).style.display = 'block';
-  //   (document.querySelector('#d1 .dice2')).style.display = 'none';
-  //   (document.querySelector('#d1 .dice3')).style.display = 'none';
-  //   (document.querySelector('#d1 .dice4')).style.display = 'none';
-  //   (document.querySelector('#d1 .dice5')).style.display = 'none';
-  //   (document.querySelector('#d1 .dice6')).style.display = 'none';
-  // } else if (dice1 == 2) {
-  //   (document.querySelector('#d1 .dice1')).style.display = 'none';
-  //   (document.querySelector('#d1 .dice2')).style.display = 'block';
-  //   (document.querySelector('#d1 .dice3')).style.display = 'none';
-  //   (document.querySelector('#d1 .dice4')).style.display = 'none';
-  //   (document.querySelector('#d1 .dice5')).style.display = 'none';
-  //   (document.querySelector('#d1 .dice6')).style.display = 'none';
-  // } else if (dice1 == 3) {
-  //   (document.querySelector('#d1 .dice1')).style.display = 'none';
-  //   (document.querySelector('#d1 .dice2')).style.display = 'none';
-  //   (document.querySelector('#d1 .dice3')).style.display = 'block';
-  //   (document.querySelector('#d1 .dice4')).style.display = 'none';
-  //   (document.querySelector('#d1 .dice5')).style.display = 'none';
-  //   (document.querySelector('#d1 .dice6')).style.display = 'none';
-  // } else if (dice1 == 4) {
-  //   (document.querySelector('#d1 .dice1')).style.display = 'none';
-  //   (document.querySelector('#d1 .dice2')).style.display = 'none';
-  //   (document.querySelector('#d1 .dice3')).style.display = 'none';
-  //   (document.querySelector('#d1 .dice4')).style.display = 'block';
-  //   (document.querySelector('#d1 .dice5')).style.display = 'none';
-  //   (document.querySelector('#d1 .dice6')).style.display = 'none';
-  // } else if (dice1 == 5) {
-  //   (document.querySelector('#d1 .dice1')).style.display = 'none';
-  //   (document.querySelector('#d1 .dice2')).style.display = 'none';
-  //   (document.querySelector('#d1 .dice3')).style.display = 'none';
-  //   (document.querySelector('#d1 .dice4')).style.display = 'none';
-  //   (document.querySelector('#d1 .dice5')).style.display = 'block';
-  //   (document.querySelector('#d1 .dice6')).style.display = 'none';
-  // } else if (dice1 == 6) {
-  //   (document.querySelector('#d1 .dice1')).style.display = 'none';
-  //   (document.querySelector('#d1 .dice2')).style.display = 'none';
-  //   (document.querySelector('#d1 .dice3')).style.display = 'none';
-  //   (document.querySelector('#d1 .dice4')).style.display = 'none';
-  //   (document.querySelector('#d1 .dice5')).style.display = 'none';
-  //   (document.querySelector('#d1 .dice6')).style.display = 'block';
-  // }
 }
 
-function isAzar(launchDiceResult) {
+function resetDiceResultsDice(diceIndex) {
+  for (var i=1; i<=6; i++) {
+    var query = `#d1 .dice${i}`;
+    (document.querySelector(query)).style.display = 'none';
+    query = `#d2 .dice${i}`;
+    (document.querySelector(query)).style.display = 'none';
+    query = `#d3 .dice${i}`;
+    (document.querySelector(query)).style.display = 'none';
+  }
+}
+
+function isAzar() {
   var sum = launchDiceResult.sum;
-  return (sum >= 3 && sum <= 6) || (sum >= 15 && sum <= 18);
+  return sum <= 6 || sum >= 15;
 }
 
 function displaySC(player){
   const message = `${player.name} reçoit ${player.scoreChance} comme score de chance.`;
   addMessageToElem(results, message);
   player.playerSC.innerHTML = player.scoreChance;
-}
-
-function displayPlayerResult(player, SC){
-  let message = `${player.name} joue, ${SC.message}`;
-  let is_azar = isAzar(SC);
-  message += is_azar ? " : Azar!" : " : Chance!";
-  addMessageToElem(results, message);
 }
 
 function addMessageToElem(elem, message) {
