@@ -1,5 +1,6 @@
 var isInitPhase = true;
-var beginnerIndex = 1;
+var isBattlePhase = true;
+var beginnerIndex = 0;
 
 const new_game = document.getElementById("new_game");
 const wilfied = document.getElementById("wilfied");
@@ -9,22 +10,30 @@ const playerButtons = [wilfied, herevald];
 const wilfiedSC = document.getElementById("wilfiedSC");
 const herevaldSC = document.getElementById("herevaldSC");
 
-function Player(name, score, sc) {
+function Player(name, score, sc, bs) {
   this.name = name;
   this.scoreChance = score;
   this.playerSC = sc;
+  this.battlescore = bs;
 }
 
 Player.prototype.displayPlayerResult = function() {
   let message = `${this.name} joue, ${launchDiceResult.message}`;
-  let is_azar = isAzar(launchDiceResult);
+  let is_azar = isAzar();
   message += is_azar ? " : Azar!" : " : Chance!";
   addMessageToElem(results, message);
 };
 
-var player1 = new Player("wilfied", 0, wilfiedSC);
-var player2 = new Player("herevald", 0, herevaldSC);
+Player.prototype.displayBattleResult = function() {
+  let message = `${this.name} joue, ${launchDiceResult.message}`;
+  message += " : Battle!";
+  addMessageToElem(results, message);
+};
+
+var player1 = new Player("wilfied", 0, wilfiedSC, 0);
+var player2 = new Player("herevald", 0, herevaldSC, 0);
 var players = [player1, player2];
+
 var beginnerPlayer = players[beginnerIndex];
 var otherPlayer = players[(beginnerIndex+1)%2];
 
@@ -41,25 +50,61 @@ const results = document.getElementById("results");
 
 new_game.addEventListener("click", ()  => {
   isInitPhase = true;
+  isBattlePhase = true;
   results.innerHTML = "";
-  
-  playerButtons.forEach(function(player, index) {
-    player.disabled = index != beginnerIndex;
-  });
-  
+
+  beginnerIndex = (Math.floor(Math.random() * 6 ) + 1)%2;
+  beginnerPlayer = players[beginnerIndex];
+  otherPlayer = players[(beginnerIndex+1)%2];
+
   beginnerPlayer.scoreChance = 0;
   otherPlayer.scoreChance = 0;
+
+  beginnerPlayer.battlescore = 0;
+  otherPlayer.battlescore = 0;
+  
+  playerButtons.forEach(function(playerButton, index) {
+    playerButton.disabled = index != beginnerIndex;
+  });
   
   setDiceResults();
   wilfiedSC.innerHTML = "";
   herevaldSC.innerHTML = "";
+  addMessageToElem(results, "Début de la battle");
 });
 
 playerButtons.forEach(function(player, index) {
   player.addEventListener("click", ()  => { 
-    play(index);
+    if (isBattlePhase) {
+      handleBattlePhase(index);
+    } else {
+      play(index);
+    }
   });
 });
+
+function handleBattlePhase(index){
+  launchBattleDice();
+  players[index].displayBattleResult();
+  players[index].battlescore = launchDiceResult.sum;
+
+  if (players[(index+1)%2].battlescore == 0 || players[index].battlescore == players[(index+1)%2].battlescore) {
+    togglePlayers();
+    return;
+  };
+
+  var winner = "";
+  if (players[index].battlescore < players[(index+1)%2].battlescore) {
+    togglePlayers();
+    winner = `${players[(index+1)%2].name}`;
+  } else {
+    winner = `${players[index].name}`;
+  }
+  
+  addMessageToElem(results, `Fin de la battle. ${winner} commence à jouer.`);
+  addMessageToElem(results, "Début de la phase d'initialisation.");
+  isBattlePhase = false;
+}
 
 function play(index){
   launchDice();
@@ -86,8 +131,8 @@ function handleChance(){
       beginnerPlayer.scoreChance = launchDiceResult.sum;
       displaySC(beginnerPlayer);
       isInitPhase = false;
-      playerButtons[beginnerIndex] = true;
-      playerButtons[(beginnerIndex+1)%2] = false;
+      addMessageToElem(results, "Fin de la phase d'initialisation.");
+      togglePlayers();
     }
     else {
       otherPlayer.scoreChance = 0;
@@ -107,9 +152,13 @@ function checkWinner(){
     displayWinner(beginnerPlayer);
   }
   else { 
-    wilfied.disabled = !wilfied.disabled;
-    herevald.disabled = !herevald.disabled;
+    togglePlayers();
   }
+}
+
+function togglePlayers(){
+  playerButtons[0].disabled = !playerButtons[0].disabled;
+  playerButtons[1].disabled = !playerButtons[1].disabled;
 }
 
 function displayWinner(player) {
@@ -133,6 +182,15 @@ function launchDice() {
   };
 }
 
+function launchBattleDice() {
+  var result1 = Math.floor(Math.random() * 6 ) + 1;
+
+  launchDiceResult = {
+    message : `${result1}`,
+    sum : result1
+  };
+}
+
 function setDiceResults() {
   if (arguments.length == 0) resetDiceResultsDice();
   for (let i=0; i<arguments.length; i++) setDiceResultsDice(arguments[i], i + 1);
@@ -145,7 +203,7 @@ function setDiceResultsDice(dice, diceIndex) {
   }
 }
 
-function resetDiceResultsDice(diceIndex) {
+function resetDiceResultsDice() {
   for (var i=1; i<=6; i++) {
     var query = `#d1 .dice${i}`;
     (document.querySelector(query)).style.display = 'none';
