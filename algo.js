@@ -7,6 +7,10 @@ const herevald = document.getElementById("herevald");
 const wilfiedSC = document.getElementById("wilfiedSC");
 const herevaldSC = document.getElementById("herevaldSC");
 
+var player1 =  {"name" : "wilfied", scoreChance : 0, playerSC : wilfiedSC};
+var player2 =  {"name" : "herevald", scoreChance : 0, playerSC : herevaldSC};
+var players = [player1, player2];
+
 const d1 = document.getElementById("d1");
 const d2 = document.getElementById("d2");
 const d3 = document.getElementById("d3");
@@ -31,8 +35,23 @@ wilfied.addEventListener("click", ()  => {
   const launchDiceResult = launchDice();
   displayPlayerResult(player1, launchDiceResult);
 
-  if (isInitPhase) {
-    handleInitPhase(launchDiceResult);
+  var isBeginner = true;
+
+  if (isBeginner){
+    isInitPhase ? handleInitPhase(launchDiceResult) : checkWinner(launchDiceResult.sum);
+  } else {
+    checkWinner(launchDiceResult.sum);
+  }
+});
+
+herevald.addEventListener("click", ()  => {
+  const launchDiceResult = launchDice();
+  displayPlayerResult(player2, launchDiceResult);
+
+  var isBeginner = false;
+
+  if (isBeginner){
+    isInitPhase ? handleInitPhase(launchDiceResult) : checkWinner(launchDiceResult.sum);
   } else {
     checkWinner(launchDiceResult.sum);
   }
@@ -63,12 +82,6 @@ function handleInitPhase(launchDiceResult) {
   }
 }
 
-herevald.addEventListener("click", ()  => {
-  const launchDiceResult = launchDice();
-  displayPlayerResult(player2, launchDiceResult);
-  checkWinner(launchDiceResult.sum);
-});
-
 function checkWinner(score){
   if(player2.scoreChance === score) {
     displayWinner(player2);
@@ -89,10 +102,6 @@ function displayWinner(player) {
   addMessageToElem(results, message);
 }
 
-var player1 =  {"name" : "wilfied", scoreChance : 0, playerSC : wilfiedSC};
-var player2 =  {"name" : "herevald", scoreChance : 0, playerSC : herevaldSC};
-var players = [player1, player2];
-
 function launchDice() {
   var result1 = Math.floor(Math.random() * 6 ) + 1;
   var result2 = Math.floor(Math.random() * 6 ) + 1;
@@ -108,9 +117,63 @@ function launchDice() {
 }
 
 function setDiceResults(dice1, dice2, dice3) {
-  d1.innerHTML = dice1;
-  d2.innerHTML = dice2;
-  d3.innerHTML = dice3;
+  setDiceResultsDice(dice1, 1);
+  setDiceResultsDice(dice2, 2);
+  setDiceResultsDice(dice3, 3);
+}
+
+function setDiceResultsDice(dice, diceIndex) {
+  for (var i=1; i<=6; i++) {
+    var query = `#d${diceIndex} .dice${i}`;
+    (document.querySelector(query)).style.display = i == dice ? 'block' : 'none';
+  }
+
+  // if (dice1 == 1) {
+  //   for (var i=1; i<=6; i++) {
+  //    (document.querySelector(`#d1 .dice${i}`)).style.display = i == dice1 ? 'block' : 'none';
+  //   }
+  //   (document.querySelector('#d1 .dice1')).style.display = 'block';
+  //   (document.querySelector('#d1 .dice2')).style.display = 'none';
+  //   (document.querySelector('#d1 .dice3')).style.display = 'none';
+  //   (document.querySelector('#d1 .dice4')).style.display = 'none';
+  //   (document.querySelector('#d1 .dice5')).style.display = 'none';
+  //   (document.querySelector('#d1 .dice6')).style.display = 'none';
+  // } else if (dice1 == 2) {
+  //   (document.querySelector('#d1 .dice1')).style.display = 'none';
+  //   (document.querySelector('#d1 .dice2')).style.display = 'block';
+  //   (document.querySelector('#d1 .dice3')).style.display = 'none';
+  //   (document.querySelector('#d1 .dice4')).style.display = 'none';
+  //   (document.querySelector('#d1 .dice5')).style.display = 'none';
+  //   (document.querySelector('#d1 .dice6')).style.display = 'none';
+  // } else if (dice1 == 3) {
+  //   (document.querySelector('#d1 .dice1')).style.display = 'none';
+  //   (document.querySelector('#d1 .dice2')).style.display = 'none';
+  //   (document.querySelector('#d1 .dice3')).style.display = 'block';
+  //   (document.querySelector('#d1 .dice4')).style.display = 'none';
+  //   (document.querySelector('#d1 .dice5')).style.display = 'none';
+  //   (document.querySelector('#d1 .dice6')).style.display = 'none';
+  // } else if (dice1 == 4) {
+  //   (document.querySelector('#d1 .dice1')).style.display = 'none';
+  //   (document.querySelector('#d1 .dice2')).style.display = 'none';
+  //   (document.querySelector('#d1 .dice3')).style.display = 'none';
+  //   (document.querySelector('#d1 .dice4')).style.display = 'block';
+  //   (document.querySelector('#d1 .dice5')).style.display = 'none';
+  //   (document.querySelector('#d1 .dice6')).style.display = 'none';
+  // } else if (dice1 == 5) {
+  //   (document.querySelector('#d1 .dice1')).style.display = 'none';
+  //   (document.querySelector('#d1 .dice2')).style.display = 'none';
+  //   (document.querySelector('#d1 .dice3')).style.display = 'none';
+  //   (document.querySelector('#d1 .dice4')).style.display = 'none';
+  //   (document.querySelector('#d1 .dice5')).style.display = 'block';
+  //   (document.querySelector('#d1 .dice6')).style.display = 'none';
+  // } else if (dice1 == 6) {
+  //   (document.querySelector('#d1 .dice1')).style.display = 'none';
+  //   (document.querySelector('#d1 .dice2')).style.display = 'none';
+  //   (document.querySelector('#d1 .dice3')).style.display = 'none';
+  //   (document.querySelector('#d1 .dice4')).style.display = 'none';
+  //   (document.querySelector('#d1 .dice5')).style.display = 'none';
+  //   (document.querySelector('#d1 .dice6')).style.display = 'block';
+  // }
 }
 
 function isAzar(launchDiceResult) {
