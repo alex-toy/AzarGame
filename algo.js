@@ -2,6 +2,14 @@ var isInitPhase = true;
 var isBattlePhase = true;
 var beginnerIndex = 0;
 
+function loadPage(href)
+{
+    var xmlhttp = new XMLHttpRequest();
+    xmlhttp.open("GET", href, false);
+    xmlhttp.send();
+    return xmlhttp.responseText;
+}
+
 const new_game = document.getElementById("new_game");
 const wilfied = document.getElementById("wilfied");
 const herevald = document.getElementById("herevald");
@@ -45,6 +53,10 @@ var launchDiceResult = {
 const d1 = document.getElementById("d1");
 const d2 = document.getElementById("d2");
 const d3 = document.getElementById("d3");
+
+d1.innerHTML = loadPage('dice.html');
+d2.innerHTML = loadPage('dice.html');
+d3.innerHTML = loadPage('dice.html');
 
 const results = document.getElementById("results");
 
