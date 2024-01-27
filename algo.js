@@ -96,10 +96,12 @@ Game.prototype.resetGame = function() {
   this.otherPlayer = this.players[(this.indexCurrentplayer+1)%2];
 
   this.currentPlayer.scoreChance = 0;
-  this.otherPlayer.scoreChance = 0;
-
   this.currentPlayer.battlescore = 0;
+  this.currentPlayer.dices.total = 0;
+
+  this.otherPlayer.scoreChance = 0;
   this.otherPlayer.battlescore = 0;
+  this.otherPlayer.dices.total = 0;
   
   this.currentPlayer.playerButton.removeAttribute("disabled");
   this.otherPlayer.playerButton.setAttribute("disabled", "true");
@@ -109,18 +111,6 @@ Game.prototype.resetGame = function() {
   this.herevaldSC.innerHTML = "";
   this.gameLog.clearLogArea();
   this.gameLog.addMessageToElem("Début de la battle");
-}
-
-Game.prototype.checkWinner = function() {
-  if(this.players[0].scoreChance === this.players[this.indexCurrentplayer].dices.total) {
-    this.displayWinner(this.players[0]);
-  }
-  else if(this.players[1].scoreChance === this.players[this.indexCurrentplayer].dices.total) {
-    this.displayWinner(this.players[1]);
-  }
-  else { 
-    this.togglePlayers();
-  }
 }
 
 Game.prototype.displayWinner = function(winnerPlayer) {
@@ -168,51 +158,13 @@ Game.prototype.registerClickEvents = function() {
     playerButton.addEventListener("click", ()  => {
       if (this.isBattlePhase) {
         this.handleBattlePhase();
-      } else {
+      } else if (this.isInitPhase) {
         this.handleInitPhase();
+      } else {
+        this.handleChance();
       }
     });
   });
-}
-
-// Game.prototype.play = function() {
-//   this.startGame();
-// }
-
-// Game.prototype.startGame = function() {
-//   this.players[this.beginnerIndex].dices.launchDices();
-//   this.players[this.beginnerIndex].dices.displayPlayerResult();
-//   this.gameLog.addMessageToElem(this.players[this.beginnerIndex].dices);
-
-//   // if (beginnerIndex == index){
-//   //   isInitPhase ? handleInitPhase() : checkWinner();
-//   // } else {
-//   //   checkWinner();
-//   // }
-
-//   isInitPhase ? this.handleInitPhase() : this.checkWinner();
-//   this.checkWinner();
-// }
-
-Game.prototype.handleChance = function(){
-  var currentPlayer = this.players[this.indexCurrentplayer]
-  var otherPlayer = this.players[(this.indexCurrentplayer+1)%2]
-  if (otherPlayer.scoreChance) {
-    if(otherPlayer.scoreChance !== currentPlayer.scoreChance) {
-      currentPlayer.scoreChance = currentPlayer.scoreChance;
-      currentPlayer.displaySC();
-      this.isInitPhase = false;
-      this.gameLog.addMessageToElem("Fin de la phase d'initialisation.");
-      this.togglePlayers();
-    }
-    else {
-      otherPlayer.scoreChance = 0;
-    }
-  }
-  else {
-    otherPlayer.scoreChance = this.otherPlayer.dices.total;
-    otherPlayer.displaySC();
-  }
 }
 
 Game.prototype.handleBattlePhase = function() {
@@ -232,27 +184,68 @@ Game.prototype.handleBattlePhase = function() {
   this.isBattlePhase = false;
 }
 
+Game.prototype.handleInitPhase = function() {
+  var currentPlayer = this.players[this.indexCurrentplayer];
+  var otherPlayer = this.players[(this.indexCurrentplayer+1)%2];
+  var isFirstLaunch = currentPlayer.dices.total == 0;
+
+  if (isFirstLaunch) {
+    currentPlayer.launchDices();
+    if (currentPlayer.dices.isAzar()) {
+      this.displayWinner(this.players[this.indexCurrentplayer]);
+    } else {
+      otherPlayer.scoreChance = currentPlayer.dices.total;
+      otherPlayer.displaySC();
+    }
+  } else {
+    var currentPlayerScoreChance = otherPlayer.scoreChance;
+    currentPlayer.launchDices();
+    if (currentPlayer.dices.isAzar()) {
+      this.displayWinner(this.players[(this.indexCurrentplayer+1)%2]);
+    } else {
+      if (currentPlayer.dices.total == currentPlayerScoreChance){
+        currentPlayer.dices.total = 0;
+        currentPlayer.scoreChance = 0;
+        otherPlayer.scoreChance = 0;
+        otherPlayer.dices.total = 0;
+      } else {
+        currentPlayer.scoreChance = currentPlayer.dices.total;
+        currentPlayer.displaySC();
+        this.togglePlayers();
+        this.isInitPhase = false;
+        this.gameLog.addMessageToElem("Fin de la phase d'initialisation.");
+      }
+    }
+  }
+}
+
+Game.prototype.handleChance = function(){
+  var currentPlayer = this.players[this.indexCurrentplayer];
+  var otherPlayer = this.players[(this.indexCurrentplayer+1)%2];
+
+  currentPlayer.launchDices();
+
+  if (currentPlayer.dices.total == otherPlayer.scoreChance) {
+    this.displayWinner(otherPlayer);
+  }
+  else if (currentPlayer.dices.total == currentPlayer.scoreChance) {
+    this.displayWinner(currentPlayer);
+  } else {
+    this.togglePlayers();
+  }
+}
+
 Game.prototype.displayBattleWinner = function() {
   var winner = "";
   if (this.players[this.indexCurrentplayer].battlescore < this.players[(this.indexCurrentplayer+1)%2].battlescore) {
     winner = `${this.players[(this.indexCurrentplayer+1)%2].name}`;
-    game.togglePlayers();
+    this.togglePlayers();
   } else {
     winner = `${this.players[this.indexCurrentplayer].name}`;
   } 
   
   this.gameLog.addMessageToElem(`Fin de la battle. ${winner} commence à jouer.`);
   this.gameLog.addMessageToElem("Début de la phase d'initialisation.");
-}
-
-Game.prototype.handleInitPhase = function() {
-  this.players[this.indexCurrentplayer].launchDices();
-  if (this.players[this.indexCurrentplayer].dices.isAzar()) {
-    var winner = this.players[(this.indexCurrentplayer+1)%2].scoreChance ? this.players[(this.indexCurrentplayer+1)%2] : this.players[this.indexCurrentplayer];
-    this.displayWinner(winner);
-  } else {
-    this.handleChance();
-  }
 }
 
 //-------------------------------------------------------
