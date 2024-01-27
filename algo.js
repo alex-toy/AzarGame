@@ -10,14 +10,6 @@ function loadPage(href)
     return xmlhttp.responseText;
 }
 
-// const new_game = document.getElementById("new_game");
-// const wilfied = document.getElementById("wilfied");
-// const herevald = document.getElementById("herevald");
-// const playerButtons = [wilfied, herevald];
-
-// const wilfiedSC = document.getElementById("wilfiedSC");
-// const herevaldSC = document.getElementById("herevaldSC");
-
 //-------------------------------------------------------
 
 function Dices(){
@@ -97,6 +89,7 @@ function Game(p1, p2){
 
   this.wilfiedSC = document.getElementById("wilfiedSC");
   this.herevaldSC = document.getElementById("herevaldSC");
+  this.registerClickEvents();
 };
 
 Game.prototype.resetGame = function() {
@@ -104,18 +97,21 @@ Game.prototype.resetGame = function() {
   this.isBattlePhase = true;
   this.indexCurrentplayer = 0;
   this.beginnerIndex = (Math.floor(Math.random() * 2 ) + 1)%2;
-  this.beginnerPlayer = this.players[beginnerIndex];
-  this.otherPlayer = this.players[(beginnerIndex+1)%2];
-
+  this.beginnerPlayer = this.players[this.beginnerIndex];
+  this.otherPlayer = this.players[(this.beginnerIndex+1)%2];
+  
   this.beginnerPlayer.scoreChance = 0;
   this.otherPlayer.scoreChance = 0;
 
   this.beginnerPlayer.battlescore = 0;
   this.otherPlayer.battlescore = 0;
+
+  this.players[this.beginnerIndex].playerButton.disabled = false;
+  this.players[(this.beginnerIndex++)%2].playerButton.disabled = true;
   
-  this.playerButtons.forEach(function(playerButton, index) {
-    playerButton.disabled = index != beginnerIndex;
-  });
+  // this.playerButtons.forEach(function(playerButton, index) {
+  //   playerButton.disabled = index != beginnerIndex;
+  // });
   
   this.setDiceResults();
   this.wilfiedSC.innerHTML = "";
@@ -143,7 +139,6 @@ Game.prototype.displayWinner = function(winnerPlayer) {
 }
 
 Game.prototype.togglePlayers = function(){
-  //this.player1.enable...
   this.players[0].playerButton.disabled = !this.players[0].playerButton.disabled;
   this.players[1].playerButton.disabled = !this.players[1].playerButton.disabled;
 }
@@ -174,7 +169,7 @@ Game.prototype.resetDiceResultsDice = function() {
 Game.prototype.registerClickEvents = function() {
   this.newGameButton.addEventListener("click", ()  => {
     this.resetGame();
-    this.startGame();
+    // this.startGame();
   });
   this.players[0].registerClickEvents();
   this.players[1].registerClickEvents();
@@ -182,8 +177,7 @@ Game.prototype.registerClickEvents = function() {
 
 
 Game.prototype.play = function() {
-  this.registerClickEvents();
-  this.resetGame();
+  // this.resetGame();
   this.startGame();
 }
 
@@ -269,168 +263,9 @@ Player.prototype.registerClickEvents = function() {
   });
 };
 
-// Player.prototype.displayBattleResult = function() {
-//   this.dices.launchDices();
-//   let message = `${this.name} joue, ${launchDiceResult.message}`;
-//   message += " : Battle!";
-//   this.gameLog.addMessageToElem(results, message);
-// };
-
 
 //-------------------------------------------------------
 //-------------------------------------------------------
 var player1 = new Player("wilfied");
 var player2 = new Player("herevald");
 var game = new Game(player1, player2);
-game.play();
-
-
-
-// var beginnerPlayer = players[beginnerIndex];
-// var otherPlayer = players[(beginnerIndex+1)%2];
-
-// const results = document.getElementById("results");
-
-// new_game.addEventListener("click", ()  => {
-//   isInitPhase = true;
-//   isBattlePhase = true;
-//   results.innerHTML = "";
-
-//   beginnerIndex = (Math.floor(Math.random() * 6 ) + 1)%2;
-//   beginnerPlayer = players[beginnerIndex];
-//   otherPlayer = players[(beginnerIndex+1)%2];
-
-//   beginnerPlayer.scoreChance = 0;
-//   otherPlayer.scoreChance = 0;
-
-//   beginnerPlayer.battlescore = 0;
-//   otherPlayer.battlescore = 0;
-  
-//   playerButtons.forEach(function(playerButton, index) {
-//     playerButton.disabled = index != beginnerIndex;
-//   });
-  
-//   setDiceResults();
-//   wilfiedSC.innerHTML = "";
-//   herevaldSC.innerHTML = "";
-//   addMessageToElem(results, "Début de la battle");
-// });
-
-// function handleBattlePhase(index){
-//   launchBattleDice();
-//   players[index].displayBattleResult();
-//   players[index].battlescore = launchDiceResult.sum;
-
-//   if (players[(index+1)%2].battlescore == 0 || players[index].battlescore == players[(index+1)%2].battlescore) {
-//     togglePlayers();
-//     return;
-//   };
-
-//   var winner = "";
-//   if (players[index].battlescore < players[(index+1)%2].battlescore) {
-//     togglePlayers();
-//     winner = `${players[(index+1)%2].name}`;
-//   } else {
-//     winner = `${players[index].name}`;
-//   }
-  
-//   addMessageToElem(results, `Fin de la battle. ${winner} commence à jouer.`);
-//   addMessageToElem(results, "Début de la phase d'initialisation.");
-//   isBattlePhase = false;
-// }
-
-// function play(index){
-//   players[index].launchDice();
-//   launchDice();
-//   players[index].displayPlayerResult();
-
-//   if (beginnerIndex == index){
-//     isInitPhase ? handleInitPhase() : checkWinner();
-//   } else {
-//     checkWinner();
-//   }
-// }
-
-// function handleInitPhase() {
-//   if (isAzar()) {
-//     displayWinner(otherPlayer.scoreChance ? otherPlayer : beginnerPlayer);
-//   } else {
-//     handleChance();
-//   }
-// }
-
-// function handleChance(){
-//   if (otherPlayer.scoreChance) {
-//     if(otherPlayer.scoreChance !== launchDiceResult.sum) {
-//       beginnerPlayer.scoreChance = launchDiceResult.sum;
-//       displaySC(beginnerPlayer);
-//       isInitPhase = false;
-//       addMessageToElem(results, "Fin de la phase d'initialisation.");
-//       togglePlayers();
-//     }
-//     else {
-//       otherPlayer.scoreChance = 0;
-//     }
-//   }
-//   else {
-//     otherPlayer.scoreChance = launchDiceResult.sum;
-//     displaySC(otherPlayer);
-//   }
-// }
-
-// function togglePlayers(){
-//   playerButtons[0].disabled = !playerButtons[0].disabled;
-//   playerButtons[1].disabled = !playerButtons[1].disabled;
-// }
-
-// function displayWinner(player) {
-//   wilfied.disabled = true;
-//   herevald.disabled = true;
-//   message = `The winner is ${player.name}`;
-//   addMessageToElem(results, message);
-// }
-
-// function launchBattleDice() {
-//   var result1 = Math.floor(Math.random() * 6 ) + 1;
-
-//   launchDiceResult = {
-//     message : `${result1}`,
-//     sum : result1
-//   };
-// }
-
-// function setDiceResults() {
-//   if (arguments.length == 0) resetDiceResultsDice();
-//   for (let i=0; i<arguments.length; i++) setDiceResultsDice(arguments[i], i + 1);
-// }
-
-// function setDiceResultsDice(dice, diceIndex) {
-//   for (var i=1; i<=6; i++) {
-//     var query = `#d${diceIndex} .dice${i}`;
-//     (document.querySelector(query)).style.display = i == dice ? 'block' : 'none';
-//   }
-// }
-
-// function resetDiceResultsDice() {
-//   for (var i=1; i<=6; i++) {
-//     var query = `#d1 .dice${i}`;
-//     (document.querySelector(query)).style.display = 'none';
-//     query = `#d2 .dice${i}`;
-//     (document.querySelector(query)).style.display = 'none';
-//     query = `#d3 .dice${i}`;
-//     (document.querySelector(query)).style.display = 'none';
-//   }
-// }
-
-// function isAzar() {
-//   var sum = launchDiceResult.sum;
-//   return sum <= 6 || sum >= 15;
-// }
-
-// function addMessageToElem(elem, message) {
-//   var p = document.createElement("p");
-//   var node = document.createTextNode(message);
-//   p.appendChild(node);
-//   elem.appendChild(p);
-// }
-
