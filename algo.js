@@ -1,7 +1,3 @@
-var isInitPhase = true;
-var isBattlePhase = true;
-var beginnerIndex = 0;
-
 function loadPage(href)
 {
     var xmlhttp = new XMLHttpRequest();
@@ -20,11 +16,8 @@ function Dices(){
 }
 
 Dices.prototype.launchDices = function(){
-  // a deplacer dans une fonction la somme des dés
   this.total = this.dice1.launchDice() + this.dice2.launchDice() + this.dice3.launchDice();
-  //à déplcaer dans une fonction pour l'affichage
   this.message = `${this.dice1.diceValue} + ${this.dice2.diceValue} + ${this.dice3.diceValue}, total ${this.total}`;
-  //return this.total;
 };
 
 Dices.prototype.isAzar = function() {
@@ -71,6 +64,10 @@ GameLog.prototype.addMessageToElem = function(message){
     this.logArea.appendChild(p);
 }
 
+GameLog.prototype.clearLogArea = function(){
+    this.logArea.innerHTML = "";
+}
+
 //-------------------------------------------------------
 function Game(p1, p2){
   this.newGameButton = document.getElementById("new_game");
@@ -79,7 +76,6 @@ function Game(p1, p2){
   this.gameLog = new GameLog();
   this.isInitPhase = true;
   this.isBattlePhase = true;
-  this.beginnerIndex = 0;
   p1.gameLog = this.gameLog;
   p2.gameLog = this.gameLog;
 
@@ -95,27 +91,23 @@ function Game(p1, p2){
 Game.prototype.resetGame = function() {
   this.isInitPhase = true;
   this.isBattlePhase = true;
-  this.indexCurrentplayer = 0;
-  this.beginnerIndex = (Math.floor(Math.random() * 2 ) + 1)%2;
-  this.beginnerPlayer = this.players[this.beginnerIndex];
-  this.otherPlayer = this.players[(this.beginnerIndex+1)%2];
-  
-  this.beginnerPlayer.scoreChance = 0;
+  this.indexCurrentplayer = (Math.floor(Math.random() * 2 ) + 1)%2;
+  this.currentPlayer = this.players[this.indexCurrentplayer];
+  this.otherPlayer = this.players[(this.indexCurrentplayer+1)%2];
+
+  this.currentPlayer.scoreChance = 0;
   this.otherPlayer.scoreChance = 0;
 
-  this.beginnerPlayer.battlescore = 0;
+  this.currentPlayer.battlescore = 0;
   this.otherPlayer.battlescore = 0;
-
-  this.players[this.beginnerIndex].playerButton.disabled = false;
-  this.players[(this.beginnerIndex++)%2].playerButton.disabled = true;
   
-  // this.playerButtons.forEach(function(playerButton, index) {
-  //   playerButton.disabled = index != beginnerIndex;
-  // });
+  this.currentPlayer.playerButton.removeAttribute("disabled");
+  this.otherPlayer.playerButton.setAttribute("disabled", "true");
   
   this.setDiceResults();
   this.wilfiedSC.innerHTML = "";
   this.herevaldSC.innerHTML = "";
+  this.gameLog.clearLogArea();
   this.gameLog.addMessageToElem("Début de la battle");
 }
 
@@ -139,6 +131,7 @@ Game.prototype.displayWinner = function(winnerPlayer) {
 }
 
 Game.prototype.togglePlayers = function(){
+  this.indexCurrentplayer = (this.indexCurrentplayer+1)%2;
   this.players[0].playerButton.disabled = !this.players[0].playerButton.disabled;
   this.players[1].playerButton.disabled = !this.players[1].playerButton.disabled;
 }
@@ -169,42 +162,48 @@ Game.prototype.resetDiceResultsDice = function() {
 Game.prototype.registerClickEvents = function() {
   this.newGameButton.addEventListener("click", ()  => {
     this.resetGame();
-    // this.startGame();
   });
-  this.players[0].registerClickEvents();
-  this.players[1].registerClickEvents();
+  
+  this.playerButtons.forEach(playerButton => {
+    playerButton.addEventListener("click", ()  => {
+      if (this.isBattlePhase) {
+        this.handleBattlePhase();
+      } else {
+        this.handleInitPhase();
+      }
+    });
+  });
 }
 
+// Game.prototype.play = function() {
+//   this.startGame();
+// }
 
-Game.prototype.play = function() {
-  // this.resetGame();
-  this.startGame();
-}
+// Game.prototype.startGame = function() {
+//   this.players[this.beginnerIndex].dices.launchDices();
+//   this.players[this.beginnerIndex].dices.displayPlayerResult();
+//   this.gameLog.addMessageToElem(this.players[this.beginnerIndex].dices);
 
-Game.prototype.startGame = function() {
-  this.players[this.beginnerIndex].dices.launchDices();
-  this.players[this.beginnerIndex].dices.displayPlayerResult();
-  this.gameLog.addMessageToElem(this.players[this.beginnerIndex].dices);
+//   // if (beginnerIndex == index){
+//   //   isInitPhase ? handleInitPhase() : checkWinner();
+//   // } else {
+//   //   checkWinner();
+//   // }
 
-  // if (beginnerIndex == index){
-  //   isInitPhase ? handleInitPhase() : checkWinner();
-  // } else {
-  //   checkWinner();
-  // }
-
-  isInitPhase ? this.handleInitPhase() : this.checkWinner();
-  this.checkWinner();
-}
+//   isInitPhase ? this.handleInitPhase() : this.checkWinner();
+//   this.checkWinner();
+// }
 
 Game.prototype.handleChance = function(){
-  var otherPlayer = this.players[(this.indexCurrentplayer++)%2]
+  var currentPlayer = this.players[this.indexCurrentplayer]
+  var otherPlayer = this.players[(this.indexCurrentplayer+1)%2]
   if (otherPlayer.scoreChance) {
-    if(otherPlayer.scoreChance !== launchDiceResult.sum) {
-      beginnerPlayer.scoreChance = launchDiceResult.sum;
-      displaySC(beginnerPlayer);
-      isInitPhase = false;
-      addMessageToElem(results, "Fin de la phase d'initialisation.");
-      togglePlayers();
+    if(otherPlayer.scoreChance !== currentPlayer.scoreChance) {
+      currentPlayer.scoreChance = currentPlayer.scoreChance;
+      currentPlayer.displaySC();
+      this.isInitPhase = false;
+      this.gameLog.addMessageToElem("Fin de la phase d'initialisation.");
+      this.togglePlayers();
     }
     else {
       otherPlayer.scoreChance = 0;
@@ -216,11 +215,41 @@ Game.prototype.handleChance = function(){
   }
 }
 
+Game.prototype.handleBattlePhase = function() {
+  this.players[this.indexCurrentplayer].launchBattleDice();
+  this.players[this.indexCurrentplayer].displayBattleResult();
+
+  var otherPlayerHasPlayed = this.players[(this.indexCurrentplayer+1)%2].battlescore > 0;
+  var battleEquality = this.players[this.indexCurrentplayer].battlescore == this.players[(this.indexCurrentplayer+1)%2].battlescore;
+
+  if (!otherPlayerHasPlayed || battleEquality) {
+    game.togglePlayers();
+    return;
+  };
+
+  this.displayBattleWinner();
+  
+  this.isBattlePhase = false;
+}
+
+Game.prototype.displayBattleWinner = function() {
+  var winner = "";
+  if (this.players[this.indexCurrentplayer].battlescore < this.players[(this.indexCurrentplayer+1)%2].battlescore) {
+    winner = `${this.players[(this.indexCurrentplayer+1)%2].name}`;
+    game.togglePlayers();
+  } else {
+    winner = `${this.players[this.indexCurrentplayer].name}`;
+  } 
+  
+  this.gameLog.addMessageToElem(`Fin de la battle. ${winner} commence à jouer.`);
+  this.gameLog.addMessageToElem("Début de la phase d'initialisation.");
+}
+
 Game.prototype.handleInitPhase = function() {
-  if (this.players[this.beginnerIndex].dices.isAzar()) {
-    var current = this.players[this.beginnerIndex];
-    var other = this.players[(this.beginnerIndex++)%2];
-    this.displayWinner(other.scoreChance ? other : current);
+  this.players[this.indexCurrentplayer].launchDices();
+  if (this.players[this.indexCurrentplayer].dices.isAzar()) {
+    var winner = this.players[(this.indexCurrentplayer+1)%2].scoreChance ? this.players[(this.indexCurrentplayer+1)%2] : this.players[this.indexCurrentplayer];
+    this.displayWinner(winner);
   } else {
     this.handleChance();
   }
@@ -252,15 +281,14 @@ Player.prototype.displaySC = function(){
   this.playerSC.innerHTML = this.scoreChance;
 };
 
-Player.prototype.registerClickEvents = function() {
-  this.playerButton.addEventListener("click", ()  => {
-    var isBattlePhase = false;
-    if (isBattlePhase) {
-      this.handleBattlePhase();
-    } else {
-      this.play();
-    }
-  });
+
+Player.prototype.launchBattleDice = function() {
+  this.battlescore = Math.floor(Math.random() * 6 ) + 1;
+}
+
+Player.prototype.displayBattleResult = function() {
+  let message = `${this.name} joue, ${this.battlescore} : Battle!`;
+  this.gameLog.addMessageToElem(message);
 };
 
 
