@@ -1,3 +1,12 @@
+class Die {
+  constructor(name, age, car) {
+      this.name = name;
+      this.age = age;
+      this.car = car; // Car object as a field for User
+  }
+}
+
+
 //-------------------------------------------------------
 function Die(elementId, positionInView){
   this.diceValue = 0;
