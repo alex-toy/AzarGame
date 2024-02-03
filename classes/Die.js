@@ -4,11 +4,10 @@ class Die {
     this.positionInView = positionInView;
     this.diceValue = 0;
     let d = document.getElementById(elementId);
-    d.innerHTML = loadPage();
+    d.innerHTML = this.loadPage();
   }
 
-  loadPage()
-  {
+  loadPage() {
     const href = 'dice.html';
       var xmlhttp = new XMLHttpRequest();
       xmlhttp.open("GET", href, false);
@@ -30,4 +29,4 @@ class Die {
   }
 }
 
-module.exports = Die;
+export default Die;

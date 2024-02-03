@@ -1,5 +1,5 @@
-const Player = require('./Player');
-const Game = require('./Game');
+import Player from './classes/Player.js';
+import Game from './classes/Game.js';
 
 
 var player1 = new Player("wilfied");

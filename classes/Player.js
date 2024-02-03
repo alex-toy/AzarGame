@@ -1,3 +1,6 @@
+import Dices from './Dices.js';
+import GameLog from './GameLog.js';
+
 class Player {
   constructor(name) {
     this.name = name;
@@ -24,7 +27,6 @@ class Player {
     this.playerSC.innerHTML = this.scoreChance;
   };
   
-  
   launchBattleDice() {
     this.battlescore = Math.floor(Math.random() * 6 ) + 1;
   }
@@ -35,4 +37,4 @@ class Player {
   };
 }
 
-module.exports = Player;
+export default Player;

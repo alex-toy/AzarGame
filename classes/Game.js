@@ -1,4 +1,4 @@
-const GameLog = require('./GameLog');
+import GameLog from './GameLog.js';
 
 class Game {
   constructor(p1, p2) {
@@ -48,7 +48,7 @@ class Game {
   displayWinner(winnerPlayer) {
     this.players[0].playerButton.disabled = true;
     this.players[1].playerButton.disabled = true;
-    message = `The winner is ${winnerPlayer.name}`;
+    let message = `The winner is ${winnerPlayer.name}`;
     this.gameLog.addMessageToElem(message);
   }
   
@@ -107,7 +107,7 @@ class Game {
     var battleEquality = this.players[this.indexCurrentplayer].battlescore == this.players[(this.indexCurrentplayer+1)%2].battlescore;
   
     if (!otherPlayerHasPlayed || battleEquality) {
-      game.togglePlayers();
+      this.togglePlayers();
       return;
     };
   
@@ -181,4 +181,4 @@ class Game {
   }
 }
 
-module.exports = Game;
+export default Game;

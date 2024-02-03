@@ -1,4 +1,4 @@
-const Die = require('./die');
+import Die from './Die.js';
 
 class Dices {
     constructor() {
@@ -24,4 +24,4 @@ class Dices {
     };
   }
   
-  module.exports = Dices;
+export default Dices;
