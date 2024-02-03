@@ -1,3 +1,5 @@
+const Die = require('./die');
+
 class Dices {
     constructor() {
         this.dice1 = new Die("d1", 1);

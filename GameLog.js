@@ -1,20 +1,18 @@
-
-
-
-
-
-function GameLog(){
-    this.logArea = document.getElementById("results");
+class GameLog {
+    constructor() {
+        this.logArea = document.getElementById("results");
+    }
+  
+    addMessageToElem (message){
+        var p = document.createElement("p");
+        var node = document.createTextNode(message);
+        p.appendChild(node);
+        this.logArea.appendChild(p);
+    }
+    
+    clearLogArea (){
+        this.logArea.innerHTML = "";
+    }
   }
   
-  GameLog.prototype.addMessageToElem = function(message){
-      var p = document.createElement("p");
-      var node = document.createTextNode(message);
-      p.appendChild(node);
-      this.logArea.appendChild(p);
-  }
-  
-  GameLog.prototype.clearLogArea = function(){
-      this.logArea.innerHTML = "";
-  }
-  
+  module.exports = GameLog;
